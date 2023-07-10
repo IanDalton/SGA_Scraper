@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 import os,csv,json,time,datetime
 from dotenv import load_dotenv
 
-def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year):
+def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save=True):
     load_dotenv()
 
     # CONFIGURATIONS
@@ -117,19 +117,23 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year):
             if next_link:
                 driver.get(next_link)
 
-
-    #save the data in a json file
-    with open("dataset.json","w") as f:
-        json.dump(dataset,f)
-
-
-    # Quit the driver when you are done
     driver.quit()
 
+    if save:
+        #save the data in a json file
+        with open("dataset.json","w") as f:
+            json.dump(dataset,f)
+    else: 
+        return dataset
 
-def turn_into_csv():
-    with open("dataset.json","r") as f:
-        dataset = json.load(f)
+    # Quit the driver when you are done
+    
+
+
+def turn_into_csv(dataset=None):
+    if not dataset:
+        with open("dataset.json","r") as f:
+            dataset = json.load(f)
 
     with open("dataset.csv","w",encoding="utf-8",newline="") as f:
         writer = csv.writer(f)
@@ -142,5 +146,5 @@ def turn_into_csv():
                     for comision, datos in comisiones.items():
                         writer.writerow([ano,cuatrimestre,materia,comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
 if __name__ == "__main__":
-    extract_sga_classes()
-    turn_into_csv()
+    turn_into_csv(extract_sga_classes())
+    
