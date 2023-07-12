@@ -121,7 +121,7 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
 
     if save:
         #save the data in a json file
-        with open("dataset.json","w") as f:
+        with open("./data/dataset.json","w") as f:
             json.dump(dataset,f)
     else: 
         return dataset
@@ -132,10 +132,10 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
 
 def turn_into_csv(dataset=None):
     if not dataset:
-        with open("dataset.json","r") as f:
+        with open("./data/dataset.json","r") as f:
             dataset = json.load(f)
 
-    with open("dataset.csv","w",encoding="utf-8",newline="") as f:
+    with open("./data/dataset.csv","w",encoding="utf-8",newline="") as f:
         writer = csv.writer(f)
         headers = ["Año","Cuatrimestre","Materia","Comision","Horario","Profesores","Inscriptos"]
         writer.writerow(headers)

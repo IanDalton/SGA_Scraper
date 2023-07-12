@@ -52,7 +52,7 @@ def clean_db(data:list):
     df["Horario"]= df["Horario"].apply(clean_horario)
 
     #check the size of the dataframe in bytes
-    print(df.memory_usage(deep=True).sum()) #7832688 - 6539160 = 1293528 bytes of difference between tuple and list. that is 1.2 MB
+    #print(df.memory_usage(deep=True).sum()) #7832688 - 6539160 = 1293528 bytes of difference between tuple and list. that is 1.2 MB
 
 
     def format_horario(horarios):
@@ -181,12 +181,13 @@ def get_credits_done_in_year(db:pd.DataFrame,year:int):
 
 
 if __name__ == "__main__":
-    with open("dataset.csv","r",encoding="utf-8") as f:
+    with open("./data/dataset.csv","r",encoding="utf-8") as f:
         reader = csv.DictReader(f)
         data = list(reader)
-        db = clean_db(data)
+    db = clean_db(data)
 
 
 
-    get_credits_done_in_year(db,2022)
+    res = get_credits_done_in_year(db,2022)
+    print(res)
     #analize_db(db)
