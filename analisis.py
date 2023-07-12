@@ -71,9 +71,32 @@ def clean_db(data:list):
                 horarios[i] = (None,None,None,None)
         return horarios
 
-                
-    df["Horario"] = df["Horario"].apply(format_horario)
+    def get_inscriptos(inscriptos):
+        inscriptos = inscriptos.split(" / ")
+        return int(inscriptos[0])
+    def get_available_spaces(inscriptos):
+        inscriptos = inscriptos.split(" / ")
+        return inscriptos[1]
 
+    def get_creditos(horarios):
+        creditos = 0
+
+        for horario in horarios:
+            if horario[0] == None:
+                continue
+            inicio = horario[1]
+            fin = horario[2]
+            inicio = datetime.strptime(inicio, '%H:%M')
+            fin = datetime.strptime(fin, '%H:%M')
+            horario = (fin - inicio).seconds / 3600
+            creditos += horario
+        
+        return round(creditos)
+    df["Disponibles"] = df["Inscriptos"].apply(get_available_spaces)
+    df["Inscriptos"] = df["Inscriptos"].apply(get_inscriptos)
+    df["Horario"] = df["Horario"].apply(format_horario)
+    df["Creditos"] = df["Horario"].apply(get_creditos)
+    
     return df
 
 
@@ -136,6 +159,25 @@ def analize_db(df:pd.DataFrame):
 
     pass
 
+def get_credits_done_in_year(db:pd.DataFrame,year:int):
+    #It excludes the classes that are not the standard 1,3,6,9 credits
+    #get the total inscriptos in that year
+    db = db[db["Creditos"].isin([1,3,6,9])]
+  
+    # Get the total number of studens and credits per year
+    year_totals = db[db["Año"]==str(year)].groupby("Creditos")[["Inscriptos"]].sum()
+
+    # Plot the total number of credits
+    year_totals.plot.bar(rot=0)
+    #plt.show()
+    # multiply the credits by the number of students
+    year_totals["Creditos"] = year_totals.index
+
+    tt = year_totals["Creditos"].apply(lambda x: year_totals[year_totals["Creditos"]==x]["Inscriptos"].sum()*x )
+ 
+    return tt.sum()
+
+
 
 
 if __name__ == "__main__":
@@ -143,6 +185,8 @@ if __name__ == "__main__":
         reader = csv.DictReader(f)
         data = list(reader)
         db = clean_db(data)
-    print(db)
-    
-    analize_db(db)
+
+
+
+    get_credits_done_in_year(db,2022)
+    #analize_db(db)
