@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-import os,csv,json,time,datetime,random
+import os,csv,json,time,datetime,sys
 from dotenv import load_dotenv
 
 def login():
@@ -136,13 +136,17 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
 
     # Quit the driver when you are done
     
-def extract_sga_carreras(save = True):
+def extract_sga_carreras(save = True,debug = False):
+
+    # Logs into the sga
     driver = login()
+
+
     #Click into cursos
     driver.find_element(By.XPATH,"//*[@id='content']/div[1]/div/div/div/ul/li[3]/a").click()
     driver.find_element(By.XPATH,"//*[@id='content']/div[1]/div/div/div/ul/li[3]/ul/li[2]/a").click()
     
-    #get all carreras in from the table
+    #get all carreras in from the table and saves the link
     carreras = dict()
     table = driver.find_element(By.TAG_NAME,"tbody")
     for row in table.find_elements(By.TAG_NAME,"tr"):
@@ -151,51 +155,73 @@ def extract_sga_carreras(save = True):
                                    "Escuela":cells[2].text,
                                    "Nivel":cells[3].text,
                                    "URL":cells[5].find_element(By.TAG_NAME,"a").get_attribute("href")}
+        
+
+    #For each carrera I access the URL and delete it as the URL changes every time
     for carrera in carreras.values():
+        
         driver.get(carrera["URL"])
-        carrera["Comisiones"] = dict()
+        carrera["URL"] = None
+        carrera["Planes"] = dict()
+        #Get all study plans
         table = driver.find_element(By.TAG_NAME,"tbody")
         for row in table.find_elements(By.TAG_NAME,"tr"):
             cells = row.find_elements(By.TAG_NAME,"td")
-            carrera["Comisiones"][cells[0].text] = {"Desde":cells[2].text,
+            carrera["Planes"][cells[0].text] = {"Desde":cells[2].text,
                                                     "Hasta":cells[3].text,
                                                     "URL":cells[4].find_element(By.TAG_NAME,"a").get_attribute("href")}
-        for comision in carrera["Comisiones"].values():
-            driver.get(comision["URL"])
-            comision["Materias"] = dict()
-            #get all the tables from the page
+            
+        #For each study plan
+        for plan in carrera["Planes"].values():
+            driver.get(plan["URL"])
+            plan["Materias"] = dict()
+            # get all the tables from the page
+            # The tables may or may not have a sub table
             driver.implicitly_wait(0)
             tables = driver.find_elements(By.TAG_NAME,"table")
             print(len(tables))
             registered_tables = set()
-            for table in tables[:-1]: #La ultima tabla es de titulos
+            for table in tables[:-1]: #Las table is for certifications
                 
+                # Check if I have alredy seen the table as find elements gets me all the tables on the page
+                # This differ between pages so I cant create a standard solution
+                # Plus this works... Feel free to change it.
+
+
                 if table.id not in registered_tables:
                     registered_tables.add(table.id)
-                    #highlight the table
-                    driver.execute_script("arguments[0].style.border='3px solid red'", table)
+                    #highlight the table if debug is enabled
+                    driver.execute_script("arguments[0].style.border='3px solid red'", table) if debug else None
                     titulos = table.find_element(By.TAG_NAME,"Thead").find_elements(By.TAG_NAME,"span")
                     titulos = [titulo.text for titulo in titulos[1:]]
-                    plan = titulos[0]
-                    comision["Materias"][plan] = {"Subtitulos":titulos[1:],"Datos":dict()}
+                    
+                    titulo_plan = titulos[0]
+
+                    plan["Materias"][titulo_plan] = {"Subtitulos":titulos[1:],"Datos":dict()}
                     table = table.find_element(By.TAG_NAME,"tbody")
                     for sub_table in table.find_elements(By.TAG_NAME,"table"):
                         registered_tables.add(sub_table.id)
-                        #highlight the sub table with blue
-                        driver.execute_script("arguments[0].style.border='3px solid blue'", sub_table)
+                        
+                        driver.execute_script("arguments[0].style.border='3px solid blue'", sub_table) if debug else None
                         sub_table = sub_table.find_element(By.TAG_NAME,"tbody")
-
+                        
                         for row in sub_table.find_elements(By.TAG_NAME,"tr"):
                             cells = row.find_elements(By.TAG_NAME,"td")
                             id_materia = cells[0].text.split(" - ")[0]
-                            comision["Materias"][plan]["Datos"][id_materia] = dict()
-                            comision["Materias"][plan]["Datos"][id_materia]["Nombre"] = cells[0].text.split(" - ")[1] if len(cells[0].text.split(" - ")) != 1 else None
-                            comision["Materias"][plan]["Datos"][id_materia]["Creditos"] = cells[1].text
+
+                            materia = dict()
+                            plan["Materias"][titulo_plan]["Datos"][id_materia] = materia
+                            
+                            materia["Nombre"] = cells[0].text.split(" - ")[1] if len(cells[0].text.split(" - ")) != 1 else None
+                            materia["Creditos"] = cells[1].text
+
+                            #Check if is a required in order to move foward table or a materia table.
+                            # It filters out the blank spaces that the SGA adds needlessly 
                             if len(cells) == 4:
-                                comision["Materias"][plan]["Datos"][id_materia]["Creditos requeridos"] = cells[2].text
-                                comision["Materias"][plan]["Datos"][id_materia]["Correlativas"] = cells[3].text.split(" ")
+                                materia["Creditos requeridos"] = cells[2].text
+                                materia["Correlativas"] = list(filter(lambda text: text != "",cells[3].text.split(" ")))
                             else:
-                                comision["Materias"][plan]["Datos"][id_materia]["Correlativas"] = cells[2].text.split(" ")
+                                materia["Correlativas"] = list(filter(lambda text: text != "",cells[2].text.split(" ")))
 
                     
 
@@ -229,9 +255,9 @@ def turn_sga_into_csv(dataset=None):
         for ano,todos in dataset.items():
             for cuatrimestre,materias in todos.items():
                 for materia,comisiones in materias.items():
-                    for comision,datos  in comisiones.items():
-                        print([ano,cuatrimestre,materia,datos["departamento"],comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
-                        writer.writerow([ano,cuatrimestre,materia,datos["departamento"],comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
+                    for plan,datos  in comisiones.items():
+                        print([ano,cuatrimestre,materia,datos["departamento"],plan,datos["horario"],datos["profesores"],datos["inscriptos"]])
+                        writer.writerow([ano,cuatrimestre,materia,datos["departamento"],plan,datos["horario"],datos["profesores"],datos["inscriptos"]])
 if __name__ == "__main__":
-    extract_sga_carreras()
+    extract_sga_carreras(debug=getattr(sys, 'gettrace', None)())
     
