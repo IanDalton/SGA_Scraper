@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 import csv,sqlite3
 from datetime import datetime
 
-def clean_db(data:list):
+def clean_db(df:pd.DataFrame):
 
-    df = pd.DataFrame(data)
+    
+    
 
     #turn profesores from str to list
     df["Profesores"] = df["Profesores"].apply(lambda x: x[1:-1].split(","))
@@ -92,10 +93,11 @@ def clean_db(data:list):
             creditos += horario
         
         return round(creditos)
-    df["Disponibles"] = df["Inscriptos"].apply(get_available_spaces)
+    df["Capacidad"] = df["Inscriptos"].apply(get_available_spaces)
     df["Inscriptos"] = df["Inscriptos"].apply(get_inscriptos)
     df["Horario"] = df["Horario"].apply(format_horario)
     df["Creditos"] = df["Horario"].apply(get_creditos)
+    
     
     return df
 

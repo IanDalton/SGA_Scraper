@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 import os,csv,json,time,datetime
 from dotenv import load_dotenv
 
-def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save=True):
+def login():
     load_dotenv()
 
     # CONFIGURATIONS
@@ -37,6 +37,12 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
     # Wait for the page to load
     driver.implicitly_wait(5)
 
+    return driver
+
+def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save=True):
+    
+    driver = login()
+
     dataset = {}
     def get_info_on_page(links,year):
         # create a dictionary for the year
@@ -48,6 +54,7 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
             driver.get(url)
             materia = driver.find_element(By.XPATH,"//*[@id='content']/div[3]/div/div[1]/label").text
             cuatrimestre = driver.find_element(By.XPATH,"//*[@id='content']/div[3]/div/div[3]/div[2]/span[1]").text
+            departamento = driver.find_element(By.XPATH,"//*[@id='content']/div[3]/div/div[2]/label").text
 
             # create a dictionary for the cuatrimestre
             if dataset[year].get(cuatrimestre) == None:
@@ -65,6 +72,7 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
                     "horario":cells[1].text,
                     "profesores":cells[2].text.split(','),
                     "inscriptos":cells[3].text,
+                    "departamento":departamento
                 }
             # add the dictionary to the dataset
             dataset[year][cuatrimestre][materia] = datos
@@ -121,30 +129,35 @@ def extract_sga_classes(year_min=2010,year_max=datetime.datetime.now().year,save
 
     if save:
         #save the data in a json file
-        with open("./data/dataset.json","w") as f:
+        with open("./data/dataset.json","w",encoding="utf-8") as f:
             json.dump(dataset,f)
     else: 
         return dataset
 
     # Quit the driver when you are done
     
+def extract_sga_carreras():
+    driver = login()
+    pass
 
-
-def turn_into_csv(dataset=None):
+def turn_sga_into_csv(dataset=None):
     if not dataset:
-        with open("./data/dataset.json","r") as f:
+        with open("./data/dataset.json","r",encoding="utf-8") as f:
             dataset = json.load(f)
 
     with open("./data/dataset.csv","w",encoding="utf-8",newline="") as f:
         writer = csv.writer(f)
-        headers = ["Año","Cuatrimestre","Materia","Comision","Horario","Profesores","Inscriptos"]
+        headers = ["Año","Cuatrimestre","Materia","Departamento","Comision","Horario","Profesores","Inscriptos"]
         writer.writerow(headers)
         todos:dict
+        materias:dict
+        comisiones:dict
         for ano,todos in dataset.items():
             for cuatrimestre,materias in todos.items():
                 for materia,comisiones in materias.items():
-                    for comision, datos in comisiones.items():
-                        writer.writerow([ano,cuatrimestre,materia,comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
+                    for comision,datos  in comisiones.items():
+                        print([ano,cuatrimestre,materia,datos["departamento"],comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
+                        writer.writerow([ano,cuatrimestre,materia,datos["departamento"],comision,datos["horario"],datos["profesores"],datos["inscriptos"]])
 if __name__ == "__main__":
-    turn_into_csv(extract_sga_classes())
+    turn_sga_into_csv()
     
