@@ -2,7 +2,9 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import os,csv,json,time,datetime,sys
+from analisis import clean_db
 from dotenv import load_dotenv
+import pandas as pd
 
 def login():
     load_dotenv()
@@ -240,6 +242,36 @@ def extract_sga_carreras(save = True,debug = False):
 
     pass
 
+def turn_carreras_into_csv(dataset:dict = None):
+    if not dataset:
+        with open("./data/carreras.json","r",encoding="utf-8") as f:
+            dataset = json.load(f)
+
+    with open("./data/carreras.csv","w",encoding="utf-8",newline="") as f:
+        writer = csv.writer(f)
+        headers = ["Carrera","Plan","Desde","Hasta","Tipo","Codigo","Materia","Creditos","Creditos Requeridos","Correlativas"]
+        writer.writerow(headers)
+        planes:dict
+        materia:dict
+        for carrera,planes in dataset.items():
+            for plan,tipos in planes.get("Planes").items():
+                for tipo,materias in tipos.get("Materias").items():
+                    for codigo, materia in materias.get("Datos").items():
+                        desde = tipos.get("Desde")
+                        if desde:
+                            desde = desde.split(" ")
+                            if len(desde) == 3:
+                                desde = [f"{desde[0]} {desde[1]}",desde[2]]
+
+                        hasta = tipos.get("Hasta")
+                        if hasta:
+                            hasta = hasta.split(" ")
+                            if len(hasta) == 3:
+                                hasta = [f"{hasta[0]} {hasta[1]}",hasta[2]]
+
+                        writer.writerow([carrera,plan,desde,hasta,tipo,codigo,materia.get("Nombre"),materia.get("Creditos"),materia.get("Creditos requeridos"),materia.get("Correlativas")])
+                        
+
 def turn_sga_into_csv(dataset=None):
     if not dataset:
         with open("./data/dataset.json","r",encoding="utf-8") as f:
@@ -256,8 +288,33 @@ def turn_sga_into_csv(dataset=None):
             for cuatrimestre,materias in todos.items():
                 for materia,comisiones in materias.items():
                     for plan,datos  in comisiones.items():
-                        print([ano,cuatrimestre,materia,datos["departamento"],plan,datos["horario"],datos["profesores"],datos["inscriptos"]])
+                        #print([ano,cuatrimestre,materia,datos["departamento"],plan,datos["horario"],datos["profesores"],datos["inscriptos"]])
                         writer.writerow([ano,cuatrimestre,materia,datos["departamento"],plan,datos["horario"],datos["profesores"],datos["inscriptos"]])
+
+    with open("./data/dataset.csv","r",encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        data = list(reader)
+    db:pd.DataFrame = clean_db(data)
+    del data
+
+    with open("./data/cursos.csv","w",encoding="utf-8",newline="") as f:
+        writer = csv.writer(f)
+        headers = ['Año', 'Cuatrimestre', 'Materia', 'Departamento', 'Comision', 'Horario',
+       'Profesores', 'Inscriptos', 'Capacidad', 'Codigo']
+        writer.writerow(headers)
+        for row in db.iterrows():
+            
+            writer.writerow(row[1])
+            
+
+
+
+
 if __name__ == "__main__":
-    extract_sga_carreras(debug=getattr(sys, 'gettrace', None)())
+    #extract_sga_classes()
+
+    #extract_sga_carreras(debug=getattr(sys, 'gettrace', None)())
+    #turn_sga_into_csv()
+    turn_carreras_into_csv()
+    pass
     

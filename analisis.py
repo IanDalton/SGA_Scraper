@@ -6,8 +6,8 @@ from datetime import datetime
 
 def clean_db(df:pd.DataFrame):
 
-    
-    
+    if type(df) != pd.DataFrame:
+        df = pd.DataFrame(df)
 
     #turn profesores from str to list
     df["Profesores"] = df["Profesores"].apply(lambda x: x[1:-1].split(","))
@@ -47,7 +47,18 @@ def clean_db(df:pd.DataFrame):
                 horario = horario[0].split("Sin",1)
                 if len(horario) != 1:
                     horario[1] = None
+            else:
+                lista_horarios = horario[0].split(" ")
+                dia = lista_horarios[0]
+                inicio = lista_horarios[1]
+                fin = lista_horarios[3]
+                del lista_horarios
+                horario[0] = (dia,inicio,fin)
+
+
+
             horarios[i] = horario
+        
         return horarios
 
     df["Horario"]= df["Horario"].apply(clean_horario)
@@ -95,8 +106,10 @@ def clean_db(df:pd.DataFrame):
         return round(creditos)
     df["Capacidad"] = df["Inscriptos"].apply(get_available_spaces)
     df["Inscriptos"] = df["Inscriptos"].apply(get_inscriptos)
-    df["Horario"] = df["Horario"].apply(format_horario)
-    df["Creditos"] = df["Horario"].apply(get_creditos)
+    df["Codigo"] = df["Materia"].apply(lambda x: x.split(" - ")[0])
+    df["Materia"] = df["Materia"].apply(lambda x: x.split(" - ")[1])
+    #df["Horario"] = df["Horario"].apply(format_horario)
+    #df["Creditos"] = df["Horario"].apply(get_creditos)
     
     
     return df
@@ -188,8 +201,8 @@ if __name__ == "__main__":
         data = list(reader)
     db = clean_db(data)
 
+    #print(db["Materia"])
 
-
-    res = get_credits_done_in_year(db,2022)
-    print(res)
+    """ res = get_credits_done_in_year(db,2022)
+    print(res) """
     #analize_db(db)
