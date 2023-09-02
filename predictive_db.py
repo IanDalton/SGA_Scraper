@@ -1,6 +1,121 @@
 import pandas as pd
 import numpy as np
 import os,csv
+def get_planes_from_curso(cursos, carreras):
+    planes_list = []
+    cursos["Planes"] = None
+    
+    cuatrimestre_map = {"Primer Cuat.": 0, "Segundo Cuat.": 1}
+    print(len(cursos))
+    for i, row in cursos.iterrows():
+        materia = row["Codigo"]
+        ano = int(row["Año"])
+        cuatrimestre = cuatrimestre_map.get(row["Cuatrimestre"], 2)
+        
+        # locate all the plans that have that materia and the date is between the start and end date
+        planes = carreras[(carreras['Codigo'] == materia) & (carreras['Desde_Ano'] <= ano) & (carreras['Hasta_Ano'] >= ano)]
+
+        planes = list(planes["Plan"].unique())
+        planes_list.append(planes)
+
+        
+    
+    cursos["Planes"] = planes_list
+
+def get_inscriptos_from_previous_years(cursos:pd.DataFrame):
+    cuatrimestre_map = {"Primer Cuat.": 0, "Segundo Cuat.": 1}
+    def get_previous_year(year:int, cuatrimestre:int):
+        if cuatrimestre == 1:
+            return year 
+        else:
+            return year - 1
+    def get_previous_cuat(cuatrimestre):
+        if cuatrimestre == 0:
+            return "Segundo Cuat."
+        elif cuatrimestre == 1:
+            cuatrimestre = "Primer Cuat."
+        return cuatrimestre
+
+
+    lista_inscriptos_menos_1 = []
+    lista_inscriptos_menos_2 = []
+    lista_inscriptos_menos_3 = []	
+    for i,row in cursos.iterrows():
+        year = int(row["Año"])
+        cuatrimestre = cuatrimestre_map.get(row["Cuatrimestre"], row["Cuatrimestre"])
+        comision = row["Comision"]
+        
+        year = str(get_previous_year(year,cuatrimestre))
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        inscriptos = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Inscriptos"].values
+        lista_inscriptos_menos_1.append(inscriptos[0] if len(inscriptos) > 0 else 0)
+
+        year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
+        cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        inscriptos = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Inscriptos"].values
+        lista_inscriptos_menos_2.append(inscriptos[0] if len(inscriptos) > 0 else 0)
+
+        year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
+        cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        inscriptos = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Inscriptos"].values
+        lista_inscriptos_menos_3.append(inscriptos[0] if len(inscriptos) > 0 else 0)
+    
+    cursos["Inscriptos_menos_1"] = lista_inscriptos_menos_1
+    cursos["Inscriptos_menos_2"] = lista_inscriptos_menos_2
+    cursos["Inscriptos_menos_3"] = lista_inscriptos_menos_3
+
+def get_capacidad_from_previous_years(cursos):
+    cuatrimestre_map = {"Primer Cuat.": 0, "Segundo Cuat.": 1}
+    def get_previous_year(year:int, cuatrimestre:int):
+        if cuatrimestre == 1:
+            return year 
+        else:
+            return year - 1
+    def get_previous_cuat(cuatrimestre):
+        if cuatrimestre == 0:
+            return "Segundo Cuat."
+        elif cuatrimestre == 1:
+            cuatrimestre = "Primer Cuat."
+        return cuatrimestre
+
+
+    lista_capacidad_menos_1 = []
+    lista_capacidad_menos_2 = []
+    lista_capacidad_menos_3 = []	
+    for i,row in cursos.iterrows():
+        year = int(row["Año"])
+        cuatrimestre = cuatrimestre_map.get(row["Cuatrimestre"], row["Cuatrimestre"])
+        comision = row["Comision"]
+        
+        year = str(get_previous_year(year,cuatrimestre))
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
+        lista_capacidad_menos_1.append(capacidad[0] if len(capacidad) > 0 else 0)
+
+        year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
+        cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
+        lista_capacidad_menos_2.append(capacidad[0] if len(capacidad) > 0 else 0)
+
+        year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
+        cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
+        cuatrimestre = get_previous_cuat(cuatrimestre)
+
+        capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
+        lista_capacidad_menos_3.append(capacidad[0] if len(capacidad) > 0 else 0)
+    
+    cursos["Capacidad_menos_1"] = lista_capacidad_menos_1
+    cursos["Capacidad_menos_2"] = lista_capacidad_menos_2
+    cursos["Capacidad_menos_3"] = lista_capacidad_menos_3
+
 def clean_carreras(carreras):
     #group by plan and show the carrera and desde y hasta
     carreras_agrupadas = carreras.groupby(["Plan","Carrera"],as_index=False).agg({"Desde_Ano":"min","Desde_Cuatri":"min","Hasta_Ano":"max","Hasta_Cuatri":"max"})
