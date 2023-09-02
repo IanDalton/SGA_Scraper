@@ -249,7 +249,7 @@ def turn_carreras_into_csv(dataset:dict = None):
 
     with open("./data/carreras.csv","w",encoding="utf-8",newline="") as f:
         writer = csv.writer(f)
-        headers = ["Carrera","Plan","Desde","Hasta","Tipo","Codigo","Materia","Creditos","Creditos Requeridos","Correlativas"]
+        headers = ["Carrera","Plan","Desde_Cuatri","Desde_Ano","Hasta_Cuatri","Hasta_Ano","Tipo","Codigo","Materia","Creditos","Creditos Requeridos","Correlativas"]
         writer.writerow(headers)
         planes:dict
         materia:dict
@@ -262,14 +262,18 @@ def turn_carreras_into_csv(dataset:dict = None):
                             desde = desde.split(" ")
                             if len(desde) == 3:
                                 desde = [f"{desde[0]} {desde[1]}",desde[2]]
+                        else:
+                            desde = [None,None]
 
                         hasta = tipos.get("Hasta")
                         if hasta:
                             hasta = hasta.split(" ")
                             if len(hasta) == 3:
                                 hasta = [f"{hasta[0]} {hasta[1]}",hasta[2]]
+                        else:
+                            hasta = [None,None]
 
-                        writer.writerow([carrera,plan,desde,hasta,tipo,codigo,materia.get("Nombre"),materia.get("Creditos"),materia.get("Creditos requeridos"),materia.get("Correlativas")])
+                        writer.writerow([carrera,plan,desde[0],desde[1],hasta[0],hasta[1],tipo,codigo,materia.get("Nombre"),materia.get("Creditos"),materia.get("Creditos requeridos"),materia.get("Correlativas")])
                         
 
 def turn_sga_into_csv(dataset=None):
