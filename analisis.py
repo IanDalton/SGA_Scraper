@@ -1,7 +1,5 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import csv,sqlite3
+import csv
 from datetime import datetime
 
 def clean_db(df:pd.DataFrame):
