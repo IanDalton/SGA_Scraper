@@ -6,6 +6,5 @@ Crear un archivo .env en la carpeta con la siguiente informacion:
 ITBA_USERNAME = "{USUARIO ITBA}"
 ITBA_PASSWORD = "{CONTRASEÑA ITBA}"
 
-El proyecto busca obtener los datos de las materias del ITBA para armar una base de datos.
 
 
