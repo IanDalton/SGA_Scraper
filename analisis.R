@@ -1,5 +1,38 @@
 db <- read.csv("S:\\Github\\SGA_Scrapper\\data\\dataset_completo.csv")
 
+########################################################################################################################################
+
+# Análisis exploratorio de datos
+
+# Vamos a hacer EDA en los datos del sistema de gestión académica del ITBA (SGA).  
+
+# Nuestro objetivo es predecir la cantidad de alumnos que se va a inscribir en una materia al inicio del cuatrimestre. 
+# Esto permitiría que la facultad planificara la distribución de los alumnos en las sedes, 
+# y prevenir una falta de espacio para las clases. 
+
+library(tidyverse)
+
+# Inspección inicial
+
+dim(db)
+head(db)
+names(db)
+str(db)
+
+# Digrama de dispersión de inscriptos y capacidad
+
+ggplot(db, aes(x=Inscriptos, y=Capacidad)) +
+  geom_point() 
+
+
+
+# boxplot e histograma de inscriptos
+
+boxplot(db$Inscriptos, main = "Boxplot de inscriptos", ylab = "Valores")
+hist(db$Inscriptos, main = "Histograma de inscriptos", xlab = "Valores")
+
+
+
 # Path: analisis.R
 
 # Creating a graph that shows the creditos over the years
@@ -119,7 +152,3 @@ db %>%
   group_by(Año, Codigo,Materia,Inscriptos,Capacidad,Comision) %>% 
   arrange(desc(Inscriptos)) %>% 
   View()
-
-
-
-
