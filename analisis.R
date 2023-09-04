@@ -23,6 +23,14 @@ get_horarios <- function(x) {
 
 db$Horario <- lapply(db$Horario, get_horarios)
 
+db$Planes <- lapply(db$Planes, function(x) {
+  # Divide la cadena por coma
+  vector <- strsplit(x, ", ")[[1]]
+  # Elimina los corchetes
+  gsub("\\[|\\]|'", "", vector)
+})
+
+
 #shows the creditos over the years
 # the dots show the ammount of creditos per year
 db %>% 
@@ -33,9 +41,9 @@ db %>%
     geom_line() +
     geom_point() +
     geom_label(aes(label = Creditos), nudge_y = 100) +
-    labs(title = "Creditos por año",
+    labs(title = "Créditos ofrecidos por año",
          x = "Año",
-         y = "Creditos") +
+         y = "Créditos") +
     theme(plot.title = element_text(hjust = 0.5))
 
 # show the creditos per year but multiplying the creditos by the ammount of alumnos
@@ -48,18 +56,12 @@ db %>%
     geom_line() +
     geom_point() +
     geom_label(aes(label = Creditos), nudge_y = 2500) +
-    labs(title = "Creditos cursados por año",
+    labs(title = "Créditos cursados por año",
          x = "Año",
-         y = "Creditos") +
+         y = "Créditos") +
     theme(plot.title = element_text(hjust = 0.5))
 
 
-# Suppose your column of strings looks like this:
-string_column <- c("[[('Lunes', '18:00', '21:00'), ' externa: 4003']]")
-
-# You can use lapply() to apply a function to each element of the column:
-vector_of_vectors <- lapply(string_column, get_horarios)
-#apply that function to all the elements of the column
 
 #Making a bar graph showing the ammount of materias per year. It start from Y=500 because the first year has 500 materias
 db %>% 
@@ -73,3 +75,51 @@ db %>%
          y = "Materias") +
     theme(plot.title = element_text(hjust = 0.5))+
     coord_cartesian(ylim = c(700, 1200))
+
+
+#Testing if there is a correlation between creditos ofrecidos and creditos cursados per year
+
+db %>% 
+  filter(!is.na(Creditos))%>%
+  group_by(Año) %>% 
+  summarise(Creditos = sum(Creditos)) %>% 
+  left_join(db %>% 
+              filter(!is.na(Creditos))%>%
+              group_by(Año) %>% 
+              summarise(Creditos = sum(Creditos*Inscriptos)), by = "Año") %>% 
+  ggplot(aes(x = Creditos.x, y = Creditos.y)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(title = "Créditos ofrecidos vs cursados",
+       x = "Créditos ofrecidos",
+       y = "Créditos cursados") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+#graph bar showing the top 5 inscriptos in a year on materias that have creditos
+
+db %>% 
+  filter(!is.na(Creditos))%>%
+  group_by(Año, Codigo,Materia) %>% 
+  summarise(Inscriptos = sum(Inscriptos)) %>% 
+  arrange(desc(Inscriptos)) %>% 
+  head(8)%>%
+  ggplot(aes(x = reorder(Materia, Inscriptos), y = Inscriptos,fill = Materia)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_label(aes(label = Inscriptos), nudge_y = -100) +
+  labs(title = "Top 8 materias con más inscriptos por año",
+       x = "Materia",
+       y = "Inscriptos") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  coord_flip()+
+  facet_wrap(~Año)
+
+db %>% 
+  filter(!is.na(Creditos))%>%
+  group_by(Año, Codigo,Materia,Inscriptos,Capacidad,Comision) %>% 
+  arrange(desc(Inscriptos)) %>% 
+  View()
+
+
+
+
