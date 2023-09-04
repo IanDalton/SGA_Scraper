@@ -73,3 +73,33 @@ db %>%
          y = "Materias") +
     theme(plot.title = element_text(hjust = 0.5))+
     coord_cartesian(ylim = c(700, 1200))
+
+########################################################################################################################################
+
+# Análisis exploratorio de datos
+
+# Vamos a hacer EDA en los datos del sistema de gestión académica del ITBA (SGA).  
+
+# Nuestro objetivo es predecir la cantidad de alumnos que se va a inscribir en una materia al inicio del cuatrimestre. 
+# Esto permitiría que la facultad planificara la distribución de los alumnos en las sedes, 
+# y prevenir una falta de espacio para las clases. 
+
+library(tidyverse)
+
+# Inspección inicial
+
+dim(datos)
+head(datos)
+names(datos)
+str(datos)
+
+# Digrama de dispersión de inscriptos y capacidad
+
+ggplot(datos, aes(x=Inscriptos, y=Capacidad)) +
+  geom_point() 
+
+# boxplot e histograma de inscriptos
+
+boxplot(datos$Inscriptos, main = "Boxplot de inscriptos", ylab = "Valores")
+hist(datos$Inscriptos, main = "Histograma de inscriptos", xlab = "Valores")
+
