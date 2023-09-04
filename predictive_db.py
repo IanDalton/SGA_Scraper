@@ -1,6 +1,22 @@
 import pandas as pd
 import numpy as np
 import os,csv
+def add_creditos(carreras,cursos):
+    cursos["Creditos"] = 0
+    lista = []
+    for i in range(len(cursos)):
+        ano = int(cursos["Año"][i])
+        codigo = cursos["Codigo"][i]
+        creditos = carreras.loc[(codigo==carreras["Codigo"])&(ano>=carreras["Desde_Ano"])]["Creditos"]
+        if len(creditos)>0:
+            creditos = creditos.iloc[0]
+        else:
+            creditos = None
+        cursos["Creditos"][i] = creditos
+    
+    pass
+
+
 def get_planes_from_curso(cursos, carreras):
     planes_list = []
     cursos["Planes"] = None
@@ -96,21 +112,42 @@ def get_capacidad_from_previous_years(cursos):
         cuatrimestre = get_previous_cuat(cuatrimestre)
 
         capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
-        lista_capacidad_menos_1.append(capacidad[0] if len(capacidad) > 0 else 0)
+        if len(capacidad) > 0:
+            capacidad = capacidad[0]
+            if capacidad == "Ilimitado":
+                capacidad = 9999
+        else:
+            capacidad = 0
+        
+        lista_capacidad_menos_1.append(capacidad)
 
         year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
         cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
         cuatrimestre = get_previous_cuat(cuatrimestre)
 
         capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
-        lista_capacidad_menos_2.append(capacidad[0] if len(capacidad) > 0 else 0)
+        if len(capacidad) > 0:
+            capacidad = capacidad[0]
+            if capacidad == "Ilimitado":
+                capacidad = 9999
+        else:
+            capacidad = 0
+        
+        lista_capacidad_menos_2.append(capacidad)
 
         year = str(get_previous_year(int(year),cuatrimestre_map.get(cuatrimestre)))
         cuatrimestre = cuatrimestre_map.get(cuatrimestre, cuatrimestre)
         cuatrimestre = get_previous_cuat(cuatrimestre)
 
         capacidad = cursos[(cursos["Codigo"] == row["Codigo"]) & (cursos["Año"] == year) & (cursos["Cuatrimestre"] == cuatrimestre) & (cursos["Comision"] == comision)]["Capacidad"].values
-        lista_capacidad_menos_3.append(capacidad[0] if len(capacidad) > 0 else 0)
+        if len(capacidad) > 0:
+            capacidad = capacidad[0]
+            if capacidad == "Ilimitado":
+                capacidad = 9999
+        else:
+            capacidad = 0
+        
+        lista_capacidad_menos_3.append(capacidad)
     
     cursos["Capacidad_menos_1"] = lista_capacidad_menos_1
     cursos["Capacidad_menos_2"] = lista_capacidad_menos_2
@@ -152,37 +189,8 @@ def clean_carreras(carreras):
         carreras.loc[i,"Hasta_Ano"] = int(hasta_ano) if hasta_ano else 9999
         carreras.loc[i,"Hasta_Cuatri"] = int(hasta_cuatri) if hasta_cuatri else 9999           
 
-def generate_db(cursos:pd.DataFrame = None,carreras:pd.DataFrame = None):
 
-   
-    # Get the data
-    if not cursos:
-        with open("./data/cursos.csv","r",encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            cursos = list(reader)
-        cursos = pd.DataFrame(cursos)
-    if not carreras:
-        with open("./data/carreras.csv","r",encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            carreras = list(reader)
-        carreras = pd.DataFrame(carreras)
-    
-    clean_carreras(carreras)
-    
-    cursos["Planes"] = cursos.apply(get_cursos,args=(carreras,))
-
-    
-
-    # for each curso, add it to a new db and add the plan to the db
-    """ cursos["Planes"] = cursos.apply(lambda x: list(carreras[carreras["Codigo"].str.contains(x)]["Plan"]))
-    cursos["Carreras"] = cursos["Codigo"].apply(lambda x: list(carreras[carreras["Codigo"].str.contains(x)]["Carrera"]))
-    cursos["Correlativas"] = cursos["Codigo"].apply(lambda x: list(carreras[carreras["Codigo"].str.contains(x)]["Correlativas"]))
-    cursos["Creditos"] = cursos["Codigo"].apply(lambda x: list(carreras[carreras["Codigo"].str.contains(x)]["Creditos"]))
-    cursos["Creditos Requeridos"] = cursos["Codigo"].apply(lambda x: list(carreras[carreras["Codigo"].str.contains(x)]["Creditos Requeridos"])) """
-    
-
-    print(cursos)
 
 if __name__ == "__main__":
-    generate_db()
+    pass
     
