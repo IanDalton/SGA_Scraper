@@ -152,3 +152,62 @@ db %>%
   group_by(Año, Codigo,Materia,Inscriptos,Capacidad,Comision) %>% 
   arrange(desc(Inscriptos)) %>% 
   View()
+
+# Creating a graph showing the size of the comisions year over year in Fisica I
+
+db %>% 
+  filter(Materia == "Física I")%>%
+  group_by(Año,Comision) %>% 
+  summarise(Inscriptos = sum(Inscriptos)) %>% 
+  ggplot(aes(x = Año, y = Inscriptos,fill = Comision)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_label(aes(label = Inscriptos), nudge_y = -100) +
+  labs(title = "Inscriptos en Física I por año",
+       x = "Año",
+       y = "Inscriptos") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  coord_flip()+
+  facet_wrap(~Comision)
+
+#Creating a graph showing the average year over year in Fisica I on a line graph
+
+
+db %>% 
+  filter(Materia == "Física I")%>%
+  group_by(Año,Comision) %>% 
+  summarise(Inscriptos = mean(Inscriptos)) %>% 
+  group_by(Año) %>%
+  summarise(Inscriptos = mean(Inscriptos)) %>%
+  ggplot(aes(x = Año, y = Inscriptos)) +
+  geom_line() +
+  geom_point() +
+  geom_label(aes(label = Inscriptos)) +
+  labs(title = "Inscriptos promedio en Estructura de datos y programacion por año",
+       x = "Año",
+       y = "Inscriptos") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+db %>% 
+  filter(Codigo == "71.45")%>%
+  group_by(Año,Comision, Cuatrimestre) %>% 
+  summarise(Inscriptos = mean(Inscriptos)) %>% 
+  group_by(Año, Cuatrimestre) %>%
+  summarise(Inscriptos = mean(Inscriptos)) %>%
+  ggplot(aes(x = Año, y = Inscriptos, color = Cuatrimestre)) +
+  geom_line() +
+  geom_point() +
+  geom_label(aes(label = Inscriptos)) +
+  labs(title = "Inscriptos promedio en Estructura de datos y programacion por año",
+       x = "Año",
+       y = "Inscriptos") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#spearman correlation matrix
+
+library(corrplot)
+
+db %>% 
+  select_if(is.numeric) %>% 
+  cor(method = "spearman") %>% 
+  corrplot( method = "square", tl.col = "black", tl.srt = 45)
+
