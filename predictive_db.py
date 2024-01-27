@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
 import os,csv
+
+def add_correlativas(cursos,carreras):
+    carreras = carreras["Correlativas"].apply(eval)
+    corrs = carreras.groupby("Codigo")["Correlativas"].apply(list).reset_index()
+    print(corrs)
 def add_creditos(carreras,cursos):
     cursos["Creditos"] = 0
     lista = []
